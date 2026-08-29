@@ -25,7 +25,7 @@ export default defineConfig({
     baseURL: envConfig.baseUrl,
     actionTimeout: envConfig.timeout.action,
     navigationTimeout: envConfig.timeout.navigation,
-    trace: isCI ? 'retain-on-failure' : 'on-first-retry',
+    trace: isCI ? 'retain-on-failure' : 'on',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
