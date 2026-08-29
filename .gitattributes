@@ -1,0 +1,16 @@
+# Test automation project - simplified .gitattributes
+
+# Generated test artifacts
+test-results/** linguist-generated
+playwright-report/** linguist-generated
+*.snap linguist-generated
+
+# Package files
+package-lock.json linguist-generated
+/tsconfig.json linguist-generated
+
+# Line endings for consistency
+* text=auto
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf

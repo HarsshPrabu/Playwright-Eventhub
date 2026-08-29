@@ -1,0 +1,50 @@
+{
+  "name": "playwright-automation-framework",
+  "version": "1.0.0",
+  "description": "Enterprise End-to-End and API Test Automation Framework using Playwright and TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "cross-env HEADLESS=false npx playwright test",
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:e2e": "npx playwright test tests/e2e/",
+    "test:api": "npx playwright test tests/api/",
+    "test:dev": "cross-env TEST_ENV=dev npx playwright test",
+    "test:qa": "cross-env TEST_ENV=qa npx playwright test",
+    "test:prod": "cross-env TEST_ENV=prod npx playwright test",
+    "report": "npx playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "test-automation",
+    "e2e-testing",
+    "api-testing",
+    "page-object-model"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.0",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^26.4.0",
+    "@types/pg": "^8.20.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.3.1",
+    "playwright": "^1.59.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "luxon": "^3.7.2",
+    "pg": "^8.20.0"
+  },
+  "overrides": {
+    "hono": "4.12.25",
+    "fast-uri": "3.1.2",
+    "qs": "6.15.2",
+    "diff": "4.0.4",
+    "ip-address": "10.1.1"
+  }
+}
