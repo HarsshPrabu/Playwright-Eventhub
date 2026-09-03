@@ -11,14 +11,14 @@ test.describe('EventHub Home Page Sanity', () => {
     // Perform login
     const USER = process.env.USER_NAME ?? 'testuser@example.com';
     const PASS = process.env.USER_PASSWORD ?? 'Password123';
-    await loginPage.login(USER, PASS);
-    await page.waitForLoadState('domcontentloaded');
+    const loginStatus = await loginPage.login(USER, PASS);
+    expect(loginStatus).toBe(200);
 
     // Verify the header is visible
     expect(await homePage.isHeaderVisible()).toBeTruthy();
 
     // Verify the user is logged in (profile icon visible)
-    expect(await homePage.isUserLoggedIn()).toBeTruthy();
+    await expect(homePage.userProfile).toBeVisible();
 
     // Check that at least one event card is displayed
     const eventCount = await homePage.getEventCount();
