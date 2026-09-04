@@ -1,46 +1,61 @@
 import { test, expect } from '../../src/fixtures/base.fixture';
-import { baseUrlUI } from '../../src/helper/config/testConfig';
 
-test.describe('EventHub Home Page Sanity', () => {
-  test('Home page loads and core UI actions work', async ({ page, loginPage, homePage }) => {
-    // Navigate to the application
-    await page.goto(baseUrlUI);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000)
+const USER = process.env.USER_NAME ?? 'testuser@example.com';
+const PASS = process.env.USER_PASSWORD ?? 'Password123';
 
-    // Perform login
-    const USER = process.env.USER_NAME ?? 'testuser@example.com';
-    const PASS = process.env.USER_PASSWORD ?? 'Password123';
+test.describe('EventHub login and home page sanity', () => {
+  test('login page exposes the required controls', async ({ loginPage }) => {
+    await loginPage.navigate();
+
+    await expect(loginPage.loginHeading).toBeVisible();
+    await expect(loginPage.emailInput).toBeVisible();
+    await expect(loginPage.passwordInput).toBeVisible();
+    await expect(loginPage.loginButton).toBeVisible();
+    await expect(loginPage.registerLink).toBeVisible();
+    await expect(loginPage.loginButton).toBeEnabled();
+  });
+
+  test('user can log in and the home page loads its event content', async ({
+    page,
+    loginPage,
+    homePage,
+  }) => {
+    await loginPage.navigate();
+
     const loginStatus = await loginPage.login(USER, PASS);
     expect(loginStatus).toBe(200);
 
-    // Verify the header is visible
-    expect(await homePage.isHeaderVisible()).toBeTruthy();
+    await expect(homePage.navbar).toBeVisible();
+    await expect(homePage.userEmailDisplay).toBeVisible();
+    await expect(homePage.logoutButton).toBeVisible();
 
-    // Verify the user is logged in (profile icon visible)
-    await expect(homePage.userProfile).toBeVisible();
-
-    // Check that at least one event card is displayed
     const eventCount = await homePage.getEventCount();
     expect(eventCount).toBeGreaterThan(0);
 
-    // Grab the first event title for further checks
     const titles = await homePage.getEventTitles();
+    expect(titles).toHaveLength(eventCount);
+    expect(titles.every(title => title.length > 0)).toBe(true);
+
     const firstTitle = titles[0];
+    await expect(homePage.eventTitle(firstTitle)).toBeVisible();
+    await expect(homePage.bookNowButton(firstTitle)).toBeVisible();
 
-    // Search for the first event by name and verify it appears
-    await homePage.searchEvent(firstTitle);
-    expect(await homePage.isEventCardVisible(firstTitle)).toBeTruthy();
-
-    // Apply a category filter (example category – adjust if needed)
-    await homePage.filterByCategory('Conference');
-
-    // Open the detail view of the first event
     await homePage.openEventDetail(firstTitle);
-    const detailHeading = page.locator('[data-testid="event-title"]');
-    await expect(detailHeading).toContainText(firstTitle);
+    await expect(page).toHaveURL(/\/events\/[^/?#]+(?:[/?#].*)?$/);
+  });
 
-    // Ensure any loading spinner has disappeared
-    await homePage.waitForLoadingSpinner();
+  test('authenticated user can navigate between Events and Bookings', async ({
+    loginPage,
+    homePage,
+    page,
+  }) => {
+    await loginPage.navigate();
+    expect(await loginPage.login(USER, PASS)).toBe(200);
+
+    await homePage.navigateToSection('events');
+    await expect(page).toHaveURL(/\/events(?:\/)?(?:\?.*)?$/);
+
+    await homePage.navigateToSection('bookings');
+    await expect(page).toHaveURL(/\/bookings(?:\/)?(?:\?.*)?$/);
   });
 });

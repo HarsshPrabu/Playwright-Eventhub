@@ -1,119 +1,118 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 import { BasePage } from "./BasePage";
 
-/**
- * HomePage Page Object Model reflecting the EventHub UI.
- * Utilizes stable data-testid attributes for reliable locators.
- */
+/** Page object for the authenticated EventHub home page. */
 export class HomePage extends BasePage {
-  // Primary navigation tabs
+  readonly navbar: Locator;
   readonly navHome: Locator;
   readonly navEvents: Locator;
   readonly navBookings: Locator;
-
-  // User profile and logout
-  readonly userProfile: Locator;
+  readonly apiDocsLink: Locator;
+  readonly adminButton: Locator;
+  readonly mobileMenuButton: Locator;
+  readonly userEmailDisplay: Locator;
   readonly logoutButton: Locator;
-
-  // Event cards collection
-  readonly eventCards: Locator; // all cards
-  readonly eventTitle: (name: string) => Locator; // title within a specific card
+  readonly browseEventsLink: Locator;
+  readonly heroBookingsLink: Locator;
+  readonly viewAllEventsLink: Locator;
+  readonly exploreAllEventsButton: Locator;
+  readonly eventCards: Locator;
 
   constructor(page: Page) {
     super(page);
-    // Navigation
-    // Use Playwright's getByTestId for stable navigation locators
+
+    this.navbar = page.locator('nav');
     this.navHome = page.getByTestId('nav-home');
     this.navEvents = page.getByTestId('nav-events');
     this.navBookings = page.getByTestId('nav-bookings');
-
-    // User actions
-    // User actions using getByTestId / getByRole for clarity
-    this.userProfile = page.getByTestId('user-profile');
-    // Assuming the logout control is a button with visible text 'Logout'
-    this.logoutButton = page.getByRole('button', { name: /Logout/i });
-
-    // Event cards
-    // Event cards collection using getByTestId
+    this.apiDocsLink = page.getByRole('link', { name: 'API Docs', exact: true });
+    this.adminButton = page.getByRole('button', { name: 'Admin', exact: true });
+    this.mobileMenuButton = page.getByRole('button', { name: 'Toggle menu', exact: true });
+    this.userEmailDisplay = page.getByTestId('user-email-display');
+    this.logoutButton = page.getByTestId('logout-btn');
+    this.browseEventsLink = page.getByRole('link', { name: /Browse Events/ });
+    this.heroBookingsLink = page.getByRole('link', { name: 'My Bookings', exact: true });
+    this.viewAllEventsLink = page.getByRole('link', { name: /View all/ });
+    this.exploreAllEventsButton = page.getByRole('button', { name: 'Explore All Events', exact: true });
     this.eventCards = page.getByTestId('event-card');
-    // Helper that finds an event title within a card by text
-    this.eventTitle = (name: string) =>
-      this.eventCards.filter({ hasText: name }).locator('[data-testid="event-title"]');
   }
 
-  /** Navigate to a specific section using the top navigation */
-  async navigateToSection(section: "home" | "events" | "bookings"): Promise<void> {
+  private eventCardByName(name: string): Locator {
+    return this.eventCards.filter({ hasText: name });
+  }
+
+  eventTitle(name: string): Locator {
+    return this.eventCardByName(name).getByRole('heading', { name, exact: true });
+  }
+
+  eventLink(name: string): Locator {
+    return this.eventCardByName(name).getByRole('link', { name, exact: true });
+  }
+
+  bookNowButton(name: string): Locator {
+    return this.eventCardByName(name).getByTestId('book-now-btn');
+  }
+
+  private navLocator(section: 'home' | 'events' | 'bookings'): Locator {
     const locatorMap = {
       home: this.navHome,
       events: this.navEvents,
       bookings: this.navBookings,
     } as const;
-    await this.click(locatorMap[section]);
+
+    return locatorMap[section];
   }
 
-  /** Click on an event card by its visible name */
-  async clickEventByName(name: string): Promise<void> {
-    const card = this.eventTitle(name);
-    await this.click(card);
+  async navigateToSection(section: 'home' | 'events' | 'bookings'): Promise<void> {
+    const apiPathBySection = {
+      home: undefined,
+      events: '/api/events',
+      bookings: '/api/bookings',
+    } as const;
+    const apiPath = apiPathBySection[section];
+    const navItem = this.navLocator(section);
+
+    if (!apiPath) {
+      await navItem.click();
+      return;
+    }
+
+    await Promise.all([
+      this.page.waitForResponse(response =>
+        response.url().includes(apiPath) &&
+        response.request().method() === 'GET' &&
+        (response.ok() || response.status() === 304)
+      ),
+      navItem.click(),
+    ]);
   }
 
-  /** Retrieve all visible event titles on the page */
-  async getEventTitles(): Promise<string[]> {
-    const titles = await this.eventCards.locator('[data-testid="event-title"]').allTextContents();
-    return titles.map(t => t.trim());
-  }
-
-  /** Verify a specific event card is visible */
-  async isEventCardVisible(eventName: string): Promise<boolean> {
-    const card = this.eventTitle(eventName);
-    return await this.isVisible(card);
-  }
-
-  /** Perform logout using the profile dropdown */
-  async logout(): Promise<void> {
-    await this.click(this.userProfile);
-    await this.click(this.logoutButton);
-  }
-
-  /** Example utility to check header visibility (kept for backward compatibility) */
-  async isHeaderVisible(): Promise<boolean> {
-    const header = this.page.getByTestId('nav-home');
-    await expect(header).toBeVisible({ timeout: 3000 });
-    return true;
-  }
-
-  /** Search events by name using the search input */
-  async searchEvent(name: string): Promise<void> {
-    const searchInput = this.page.getByPlaceholder('Search events');
-    await this.fillInput(searchInput, name);
-    await this.pressKey('Enter');
-  }
-
-  /** Filter events by category using a dropdown */
-  async filterByCategory(category: string): Promise<void> {
-    const dropdown = this.page.getByLabel('Category');
-    await dropdown.selectOption({ label: category });
-  }
-
-  /** Return the total number of event cards displayed */
-  async getEventCount(): Promise<number> {
-    return await this.eventCards.count();
-  }
-
-  /** Open the detail view of an event by its title */
   async openEventDetail(eventName: string): Promise<void> {
-    const card = this.eventTitle(eventName);
-    await this.click(card);
+    await this.eventLink(eventName).click();
   }
 
-  /** Verify that the user is logged in (profile icon visible) */
+  async getEventTitles(): Promise<string[]> {
+    const titles = await this.eventCards.getByRole('heading').allTextContents();
+    return titles.map(title => title.trim());
+  }
+
+  async getEventCount(): Promise<number> {
+    return this.eventCards.count();
+  }
+
+  async isEventCardVisible(eventName: string): Promise<boolean> {
+    return this.eventCardByName(eventName).isVisible();
+  }
+
+  async logout(): Promise<void> {
+    await this.logoutButton.click();
+  }
+
+  async isHeaderVisible(): Promise<boolean> {
+    return this.navHome.isVisible();
+  }
+
   async isUserLoggedIn(): Promise<boolean> {
-    return await this.isVisible(this.userProfile);
-  }
-
-  /** Wait for any loading spinner to disappear */
-  async waitForLoadingSpinner(): Promise<void> {
-    const spinner = this.page.getByTestId('loading-spinner');
-    await this.page.waitForSelector('[data-testid="loading-spinner"]', { state: 'detached' });
+    return this.userEmailDisplay.isVisible();
   }
 }
