@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { envConfig } from '../config/env.config';
 
-const isIncognito = process.env.INCOGNITO === 'true';
+const isIncognito = envConfig.incognito;
 
 export const test = isIncognito
   ? base.extend<{ context: BrowserContext; page: Page }>({
@@ -27,7 +27,7 @@ export const test = isIncognito
 
         const context = await chromium.launchPersistentContext(userDataDir, {
           headless: envConfig.headless,
-          ignoreHTTPSErrors: true,
+          ignoreHTTPSErrors: envConfig.ignoreHTTPSErrors,
           acceptDownloads: true,
           viewport: null,
           httpCredentials,

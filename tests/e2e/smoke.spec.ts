@@ -11,11 +11,10 @@ test.describe('E2E Smoke & Hybrid UI-API Suite', () => {
     await expect(page).toHaveTitle(/.+/);
   });
 
-  test('TC-002: BasePage UI interaction and screenshot capture', async ({ loginPage }) => {
+  test('TC-002: Screenshot capture helper works', async ({ loginPage, screenshotHelper }) => {
     await loginPage.navigate();
 
-    // Demonstrate screenshot capability on BasePage
-    const screenshotBuffer = await loginPage.takeScreenshot();
+    const screenshotBuffer = await screenshotHelper.pageScreenshot();
     expect(screenshotBuffer).toBeDefined();
   });
 
@@ -23,9 +22,12 @@ test.describe('E2E Smoke & Hybrid UI-API Suite', () => {
     await loginPage.navigate();
 
     // 1. Mock a backend endpoint on the UI page
-    await loginPage.mockApiResponse('**/api/mock-profile', {
-      user: 'Test User',
-      status: 'Active',
+    await page.route('**/api/mock-profile', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ user: 'Test User', status: 'Active' }),
+      });
     });
 
     // 2. Fetch within the browser DOM (verifies page routing interceptor)
@@ -38,6 +40,6 @@ test.describe('E2E Smoke & Hybrid UI-API Suite', () => {
     expect(result.status).toBe('Active');
 
     // 3. Clean up route mocking
-    await loginPage.unmockApi('**/api/mock-profile');
+    await page.unroute('**/api/mock-profile');
   });
 });

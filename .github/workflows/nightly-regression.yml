@@ -1,0 +1,54 @@
+name: Nightly EventHub Regression
+
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: eventhub-nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Full cross-browser regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers and dependencies
+        run: npx playwright install --with-deps
+
+      - name: Run full regression
+        run: npx playwright test --project=api --project=chromium --project=firefox --project=webkit
+        env:
+          CI: true
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_URL: ${{ vars.API_URL }}
+          USER_NAME: ${{ secrets.USER_NAME }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-nightly-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

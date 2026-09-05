@@ -1,99 +1,184 @@
-# Enterprise Playwright Test Automation Framework
+# EventHub Playwright Test Framework
 
-A modular, extensible, and production-ready **End-to-End (E2E) & API Test Automation Framework** built with [Playwright](https://playwright.dev/) and TypeScript.
+TypeScript-based UI and REST API test automation for EventHub, built with
+[Playwright](https://playwright.dev/).
 
----
+The framework uses page objects, focused helpers, typed configuration, Playwright
+fixtures, API services, optional database support, and GitHub Actions CI.
 
-## 🌟 Key Features
+## Key features
 
-- **Page Object Model (POM)**: Robust base page abstraction (`BasePage`) with auto-waits, stale element recovery, table/grid helpers, and screenshot handling.
-- **Unified Configuration**: Environment-based config (`.env`, `.env.dev`, `.env.qa`, `.env.prod`) with typed TypeScript schema (`src/config/env.config.ts`).
-- **Generic REST API Client**: Built-in `ApiClient` wrapping Playwright's `APIRequestContext` for API testing and data setup.
-- **Generic Database Connector**: `DatabaseUtil` supporting PostgreSQL query execution and connection pooling.
-- **Fixture-Driven DI**: Dependency injection of pages, clients, and helpers via Playwright fixtures.
-- **Multi-Browser & Headless Support**: Pre-configured Chromium, Firefox, WebKit execution.
-- **Rich Reporting**: Built-in HTML reports, failure traces, screenshots, and JSON result output.
+- Page Object Model with a minimal `BasePage`.
+- Single-responsibility UI, wait, API-wait, storage, dialog, screenshot, and validation helpers.
+- Typed environment configuration with deterministic precedence.
+- EventHub API client built on Playwright's `APIRequestContext`.
+- Optional worker-scoped PostgreSQL pool for database tests.
+- Authentication setup with reusable Playwright `storageState`.
+- Chromium, Firefox, and WebKit projects.
+- HTML reports, traces, screenshots, and JSON results on failure.
 
----
+## Project structure
 
-## 📁 Directory Structure
-
-```
-├── .env                        # Local active configuration
-├── .env.example                # Template for environment variables
-├── config/
-│   └── src/config/env.config.ts # Type-safe environment config loader
+```text
+├── .env.example
+├── .github/workflows/
+│   ├── pull-request.yml          # Typecheck on pull requests
+│   ├── main-integration.yml      # API + Chromium on main
+│   └── nightly-regression.yml    # Full cross-browser scheduled run
 ├── src/
 │   ├── api/
-│   │   └── ApiClient.ts        # Generic REST API client
+│   │   ├── BaseAPI.ts            # Typed API request foundation
+│   │   ├── errors/ApiRequestError.ts
+│   │   ├── models/EventHubModels.ts
+│   │   └── services/EventHubAPI.ts
+│   ├── components/
+│   │   ├── AppHeader.ts
+│   │   ├── EventCard.ts
+│   │   └── NotificationToast.ts
+│   ├── config/env.config.ts      # Validated environment configuration
+│   ├── db/
+│   │   ├── DatabasePool.ts       # Optional worker-scoped PostgreSQL pool
+│   │   └── databaseConfig.ts
 │   ├── fixtures/
-│   │   ├── base.fixture.ts     # Main fixture injecting pages & clients
-│   │   └── incognito.fixture.ts # Isolated browser context fixture
-│   ├── helper/
-│   │   └── utils/              # Generic Date, Validation, and DB utils
+│   │   ├── base.fixture.ts       # Pages, API clients, and helpers
+│   │   └── incognito.fixture.ts
+│   ├── helpers/
+│   │   ├── ApiWaitHelper.ts
+│   │   ├── DateTimeUtil.ts
+│   │   ├── DialogHelper.ts
+│   │   ├── ScreenshotHelper.ts
+│   │   ├── StorageHelper.ts
+│   │   ├── TestDataUtil.ts
+│   │   ├── UiActions.ts
+│   │   ├── ValidationUtil.ts
+│   │   └── WaitHelper.ts
 │   └── pages/
-│       ├── BasePage.ts         # Core reusable UI action wrapper
-│       ├── Components.ts       # Common UI component helpers (Modals, Nav)
-│       ├── LoginPage.ts        # Example Login Page Object
-│       └── HomePage.ts         # Example Home/Dashboard Page Object
-├── test-data/                  # Static & schema test data
+│       ├── BasePage.ts
+│       ├── HomePage.ts
+│       └── LoginPage.ts
+├── test-data/                   # Static test data
 ├── tests/
-│   ├── e2e/
-│   │   └── smoke.spec.ts       # Starter E2E smoke tests
-│   └── api/
-│       └── apiSample.spec.ts   # Starter API tests
-├── playwright.config.js        # Playwright test runner configuration
-└── package.json
+│   ├── api/eventhub.api.spec.ts
+│   ├── auth.setup.ts             # Creates playwright/.auth/user.json
+│   └── e2e/
+│       ├── eventhub-home.sanity.spec.ts
+│       └── smoke.spec.ts
+├── playwright.config.ts
+├── package.json
+└── tsconfig.json
 ```
 
----
+## Prerequisites
 
-## 🚀 Getting Started
+- Node.js 22 (the version used by CI)
+- npm
+- EventHub credentials for authenticated UI/API tests
 
-### 1. Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- npm or yarn
+## Installation
 
-### 2. Installation
+Use the lockfile for reproducible installation:
+
 ```bash
-npm install
+npm ci
 npx playwright install --with-deps
 ```
 
-### 3. Setup Your Target Website
-Copy `.env.example` to `.env` and fill in your target website's base URL and credentials:
+Use `npm install` only when intentionally changing dependencies or regenerating
+`package-lock.json`.
+
+## Configuration
+
+Copy `.env.example` to `.env` for local execution. Local development has safe
+EventHub URL defaults, but credentials must be supplied for authenticated tests.
+`.env`, `.env.dev`, `.env.qa`, `.env.staging`, and `.env.prod` are ignored by Git;
+`.env.example` is the committed template.
+
 ```ini
 TEST_ENV=dev
-BASE_URL=https://your-target-website.com
-API_URL=https://api.your-target-website.com
+BASE_URL=https://eventhub.rahulshettyacademy.com
+API_URL=https://api.eventhub.rahulshettyacademy.com/api
+USER_NAME=your-user@example.com
+USER_PASSWORD=your-password
 HEADLESS=true
 ```
 
----
+Configuration precedence is:
 
-## 🧪 Running Tests
+```text
+CI/process variables > .env.<environment> > .env > local defaults
+```
+
+Supported environments are `dev`, `qa`, `staging`, and `prod`. Non-development
+execution requires the matching environment file or explicit `BASE_URL` and
+`API_URL` values. CI must always provide both URLs.
+
+Other supported settings include `DEBUG_API`, `INCOGNITO`,
+`IGNORE_HTTPS_ERRORS`, `ACTION_TIMEOUT`, `EXPECT_TIMEOUT`,
+`DEFAULT_TIMEOUT`, `NAVIGATION_TIMEOUT`, and optional `DB_*` settings. See
+`.env.example` for the complete list. Only `src/config/env.config.ts` reads
+environment variables directly.
+
+## Running tests
 
 | Command | Description |
 | :--- | :--- |
-| `npm run test` | Run all tests across all configured browsers |
-| `npm run test:headed` | Run tests in headed (visible) browser mode |
-| `npm run test:chromium` | Run tests on Chromium only |
-| `npm run test:e2e` | Run only E2E UI test specs |
-| `npm run test:api` | Run only API test specs |
-| `npm run test:dev` | Run tests against the DEV environment |
-| `npm run test:qa` | Run tests against the QA environment |
-| `npm run report` | Open the interactive HTML test report |
-| `npm run typecheck` | Validate TypeScript types without executing |
+| `npm run test` | Run all configured Playwright projects |
+| `npm run test:headed` | Run all tests with visible browsers |
+| `npm run test:chromium` | Run the Chromium project |
+| `npm run test:e2e` | Run E2E UI specs |
+| `npm run test:api` | Run API specs |
+| `npm run test:dev` | Run against the development environment |
+| `npm run test:qa` | Run against the QA environment |
+| `npm run test:prod` | Run against the production environment |
+| `npm run typecheck` | Validate TypeScript without running tests |
+| `npm run report` | Open the HTML report |
+| `npx playwright test --project=api` | Run only the API project |
+| `npx playwright test --project=firefox` | Run only Firefox |
 
----
+The UI projects depend on `tests/auth.setup.ts` and reuse
+`playwright/.auth/user.json`. Authenticated tests require `USER_NAME` and
+`USER_PASSWORD`.
 
-## 📝 How to Add New Tests for Your Website
+## GitHub Actions
 
-### Step 1: Create a Page Object
-Create a new file in `src/pages/` extending `BasePage`:
+Three workflows are committed under `.github/workflows/`:
+
+- Pull requests to `main`: install dependencies and run typechecking.
+- Pushes to `main`: run API and Chromium integration tests.
+- Nightly/manual execution: run API plus Chromium, Firefox, and WebKit.
+
+Configure these repository variables:
+
+```text
+BASE_URL
+API_URL
+```
+
+Configure these repository secrets:
+
+```text
+USER_NAME
+USER_PASSWORD
+```
+
+CI uses `npm ci`, Node.js 22, `CI=true`, and installs only the browsers needed
+by each workflow. Reports and test results are uploaded as workflow artifacts.
+Do not commit `.env` files, credentials, tokens, or generated authentication
+state.
+
+## Optional database testing
+
+Database access is not required for the UI or API suites. If database tests are
+introduced, use the worker-scoped `DatabasePool` fixture and provide the
+corresponding `DB_*` settings. Tests must own their data and clean up explicitly;
+the framework does not require a database for normal execution.
+
+## Adding a page object and test
+
+Create a focused page object in `src/pages/`:
+
 ```typescript
-// src/pages/ProductsPage.ts
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class ProductsPage extends BasePage {
@@ -107,32 +192,24 @@ export class ProductsPage extends BasePage {
   }
 
   async searchProduct(name: string): Promise<void> {
-    await this.fillInput(this.searchInput, name);
-    await this.page.keyboard.press('Enter');
+    await this.searchInput.fill(name);
+    await this.searchInput.press('Enter');
   }
 }
 ```
 
-### Step 2: Register in Fixture (Optional but Recommended)
-Add your page object to `src/fixtures/base.fixture.ts`:
+Register the page in `src/fixtures/base.fixture.ts` when it is shared by
+multiple tests, then create a spec under `tests/e2e/`:
+
 ```typescript
-import { ProductsPage } from '../pages/ProductsPage';
+import { expect, test } from '../../src/fixtures/base.fixture';
 
-// Inside test.extend<{ productsPage: ProductsPage }>()
-productsPage: async ({ page }, use) => {
-  await use(new ProductsPage(page));
-},
-```
-
-### Step 3: Write Your Test
-Create a spec file in `tests/e2e/`:
-```typescript
-// tests/e2e/products.spec.ts
-import { test, expect } from '../../src/fixtures/base.fixture';
-
-test('Should find product by search', async ({ page, productsPage }) => {
+test('finds a product by search', async ({ page, productsPage }) => {
   await page.goto('/products');
   await productsPage.searchProduct('Laptop');
   await expect(productsPage.productList.first()).toBeVisible();
 });
 ```
+
+Keep assertions in tests, keep page objects focused on application actions, and
+prefer stable application locators such as roles, labels, and test IDs.

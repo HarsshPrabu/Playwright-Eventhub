@@ -1,4 +1,5 @@
 import { Page, Locator } from "@playwright/test";
+import { NotificationToast } from '../components/NotificationToast';
 import { BasePage } from "./BasePage";
 
 export class LoginPage extends BasePage {
@@ -7,9 +8,7 @@ export class LoginPage extends BasePage {
   readonly passwordInput: Locator;
   // Action button
   readonly loginButton: Locator;
-  // Live region containing transient notifications
-  readonly notificationRegion: Locator;
-  readonly dismissErrorButton: Locator;
+  readonly notificationToast: NotificationToast;
   // Login page heading
   readonly loginHeading: Locator;
   // Registration link
@@ -20,11 +19,7 @@ export class LoginPage extends BasePage {
     this.emailInput = page.getByLabel('Email', { exact: true });
     this.passwordInput = page.getByLabel('Password', { exact: true });
     this.loginButton = page.getByRole('button', { name: 'Sign In', exact: true });
-    this.notificationRegion = page.locator('[aria-live="polite"]');
-    this.dismissErrorButton = this.notificationRegion.getByRole('button', {
-      name: 'Dismiss',
-      exact: true,
-    });
+    this.notificationToast = new NotificationToast(page);
     this.loginHeading = page.getByRole('heading', {
       name: 'Sign in to EventHub',
       exact: true,
@@ -36,10 +31,10 @@ export class LoginPage extends BasePage {
   async navigate(): Promise<void> { await this.navigateTo('/login'); }
 
   /** Fill the email field */
-  async enterEmail(email: string): Promise<void> { await this.fillInput(this.emailInput, email); }
+  async enterEmail(email: string): Promise<void> { await this.emailInput.fill(email); }
 
   /** Fill the password field */
-  async enterPassword(password: string): Promise<void> { await this.fillInput(this.passwordInput, password); }
+  async enterPassword(password: string): Promise<void> { await this.passwordInput.fill(password); }
 
   /** Submit credentials and return the login response status */
   async clickLogin(): Promise<number> {
@@ -68,7 +63,7 @@ export class LoginPage extends BasePage {
 
   /** Dismiss the login error toast */
   async dismissLoginError(): Promise<void> {
-    await this.dismissErrorButton.click();
+    await this.notificationToast.dismiss();
   }
 
   async isLoginButtonEnabled(): Promise<boolean> { return await this.loginButton.isEnabled(); }

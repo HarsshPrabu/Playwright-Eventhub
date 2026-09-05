@@ -6,8 +6,6 @@ playwright-report/** linguist-generated
 *.snap linguist-generated
 
 # Package files
-package-lock.json linguist-generated
-/tsconfig.json linguist-generated
 
 # Line endings for consistency
 * text=auto

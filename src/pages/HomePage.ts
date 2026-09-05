@@ -1,76 +1,43 @@
-import { Locator, Page } from "@playwright/test";
-import { BasePage } from "./BasePage";
+import { Locator, Page } from '@playwright/test';
+import { ApiWaitHelper } from '../helpers/ApiWaitHelper';
+import { AppHeader, AppSection } from '../components/AppHeader';
+import { EventCard } from '../components/EventCard';
+import { BasePage } from './BasePage';
 
 /** Page object for the authenticated EventHub home page. */
 export class HomePage extends BasePage {
-  readonly navbar: Locator;
-  readonly navHome: Locator;
-  readonly navEvents: Locator;
-  readonly navBookings: Locator;
-  readonly apiDocsLink: Locator;
-  readonly adminButton: Locator;
-  readonly mobileMenuButton: Locator;
-  readonly userEmailDisplay: Locator;
-  readonly logoutButton: Locator;
+  readonly header: AppHeader;
   readonly browseEventsLink: Locator;
   readonly heroBookingsLink: Locator;
   readonly viewAllEventsLink: Locator;
   readonly exploreAllEventsButton: Locator;
   readonly eventCards: Locator;
+  private readonly apiWaitHelper: ApiWaitHelper;
 
   constructor(page: Page) {
     super(page);
 
-    this.navbar = page.locator('nav');
-    this.navHome = page.getByTestId('nav-home');
-    this.navEvents = page.getByTestId('nav-events');
-    this.navBookings = page.getByTestId('nav-bookings');
-    this.apiDocsLink = page.getByRole('link', { name: 'API Docs', exact: true });
-    this.adminButton = page.getByRole('button', { name: 'Admin', exact: true });
-    this.mobileMenuButton = page.getByRole('button', { name: 'Toggle menu', exact: true });
-    this.userEmailDisplay = page.getByTestId('user-email-display');
-    this.logoutButton = page.getByTestId('logout-btn');
+    this.header = new AppHeader(page);
     this.browseEventsLink = page.getByRole('link', { name: /Browse Events/ });
-    this.heroBookingsLink = page.getByRole('link', { name: 'My Bookings', exact: true });
+    this.heroBookingsLink = page.getByRole('main').locator('a[href="/bookings"]');
     this.viewAllEventsLink = page.getByRole('link', { name: /View all/ });
     this.exploreAllEventsButton = page.getByRole('button', { name: 'Explore All Events', exact: true });
-    this.eventCards = page.getByTestId('event-card');
+    this.eventCards = page.getByRole('article');
+    this.apiWaitHelper = new ApiWaitHelper(page);
   }
 
-  private eventCardByName(name: string): Locator {
-    return this.eventCards.filter({ hasText: name });
+  eventCard(name: string): EventCard {
+    return new EventCard(this.eventCards, name);
   }
 
-  eventTitle(name: string): Locator {
-    return this.eventCardByName(name).getByRole('heading', { name, exact: true });
-  }
-
-  eventLink(name: string): Locator {
-    return this.eventCardByName(name).getByRole('link', { name, exact: true });
-  }
-
-  bookNowButton(name: string): Locator {
-    return this.eventCardByName(name).getByTestId('book-now-btn');
-  }
-
-  private navLocator(section: 'home' | 'events' | 'bookings'): Locator {
-    const locatorMap = {
-      home: this.navHome,
-      events: this.navEvents,
-      bookings: this.navBookings,
-    } as const;
-
-    return locatorMap[section];
-  }
-
-  async navigateToSection(section: 'home' | 'events' | 'bookings'): Promise<void> {
+  async navigateToSection(section: AppSection): Promise<void> {
     const apiPathBySection = {
       home: undefined,
       events: '/api/events',
       bookings: '/api/bookings',
     } as const;
     const apiPath = apiPathBySection[section];
-    const navItem = this.navLocator(section);
+    const navItem = this.header.navLocator(section);
 
     if (!apiPath) {
       await navItem.click();
@@ -78,7 +45,7 @@ export class HomePage extends BasePage {
     }
 
     await Promise.all([
-      this.page.waitForResponse(response =>
+      this.apiWaitHelper.forResponse(response =>
         response.url().includes(apiPath) &&
         response.request().method() === 'GET' &&
         (response.ok() || response.status() === 304)
@@ -88,7 +55,7 @@ export class HomePage extends BasePage {
   }
 
   async openEventDetail(eventName: string): Promise<void> {
-    await this.eventLink(eventName).click();
+    await this.eventCard(eventName).openDetails();
   }
 
   async getEventTitles(): Promise<string[]> {
@@ -101,18 +68,18 @@ export class HomePage extends BasePage {
   }
 
   async isEventCardVisible(eventName: string): Promise<boolean> {
-    return this.eventCardByName(eventName).isVisible();
+    return this.eventCard(eventName).root.isVisible();
   }
 
   async logout(): Promise<void> {
-    await this.logoutButton.click();
+    await this.header.logout();
   }
 
   async isHeaderVisible(): Promise<boolean> {
-    return this.navHome.isVisible();
+    return this.header.navbar.isVisible();
   }
 
   async isUserLoggedIn(): Promise<boolean> {
-    return this.userEmailDisplay.isVisible();
+    return this.header.userEmailDisplay.isVisible();
   }
 }

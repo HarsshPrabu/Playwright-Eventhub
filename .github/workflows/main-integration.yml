@@ -1,0 +1,54 @@
+name: EventHub Integration Tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eventhub-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: API and Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium and dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run API and Chromium tests
+        run: npx playwright test --project=api --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ vars.BASE_URL }}
+          API_URL: ${{ vars.API_URL }}
+          USER_NAME: ${{ secrets.USER_NAME }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-main-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 5
