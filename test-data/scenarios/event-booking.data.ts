@@ -25,7 +25,7 @@ export const eventBookingScenarios = {
   },
   insufficientSeats: {
     testCaseId: 'EVT-DETAIL-009',
-    apiTestCaseId: 'API-003',
+    apiTestCaseId: 'API-BKG-001',
     event: {
       totalSeats: TEST_DATA_LIMITS.singleSeatEventSeats,
     },

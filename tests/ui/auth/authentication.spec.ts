@@ -1,4 +1,4 @@
-import { expect, test } from '../../../src/fixtures/base.fixture';
+import { expect, test } from '../../../src/fixtures/ui.fixture';
 import { envConfig } from '../../../src/config/env.config';
 
 test.describe('P0 Authentication', { tag: '@p0' }, () => {

@@ -1,4 +1,4 @@
-import { expect, test } from '../../../src/fixtures/base.fixture';
+import { expect, test } from '../../../src/fixtures/ui.fixture';
 import { envConfig } from '../../../src/config/env.config';
 import { TestDataManager } from '../../../test-data/TestDataManager';
 import { eventBookingScenarios } from '../../../test-data/scenarios/event-booking.data';
@@ -24,8 +24,8 @@ test.describe('P0 Customer event booking', { tag: '@p0' }, () => {
       await test.step('Confirm the booking', () => eventDetailsPage.bookingForm.confirmBooking());
       await test.step('Verify booking confirmation and calculated total', async () => {
         await expect(eventDetailsPage.bookingConfirmation.heading).toContainText('Booking Confirmed');
-        await expect(eventDetailsPage.bookingConfirmation.tickets).toHaveText('2');
-        await expect(eventDetailsPage.bookingConfirmation.total).toHaveText(`$${event.price * 2}`);
+        await expect(eventDetailsPage.bookingConfirmation.tickets).toHaveText(String(scenario.booking.quantity));
+        await expect(eventDetailsPage.bookingConfirmation.total).toHaveText(`$${Number(event.price) * scenario.booking.quantity}`);
       });
       await test.step('Verify the booking exists and availability decreased', async () => {
         const bookings = await authenticatedEventHubApi.getBookingsForEvent(event.id);

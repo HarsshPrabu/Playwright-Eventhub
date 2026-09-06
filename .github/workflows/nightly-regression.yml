@@ -42,9 +42,11 @@ jobs:
           API_URL: ${{ vars.API_URL }}
           USER_NAME: ${{ secrets.USER_NAME }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          UI_DIAGNOSTICS: failure
+          API_DIAGNOSTICS: failure
 
       - name: Upload Playwright report
-        if: ${{ !cancelled() }}
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-nightly-${{ github.run_number }}

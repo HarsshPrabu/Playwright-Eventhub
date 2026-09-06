@@ -18,7 +18,7 @@ export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
-    ['list'],
+    ['list', { printSteps: true }],
   ],
 
   use: {
@@ -27,7 +27,7 @@ export default defineConfig({
     navigationTimeout: envConfig.timeout.navigation,
     trace: isCI ? 'retain-on-failure' : 'on',
     video: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     ignoreHTTPSErrors: envConfig.ignoreHTTPSErrors,
   },
 
@@ -49,10 +49,7 @@ export default defineConfig({
         storageState: 'playwright/.auth/user.json',
         launchOptions: {
           args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-web-security',
           ],
         },
       },

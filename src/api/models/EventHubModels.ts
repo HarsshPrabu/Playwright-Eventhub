@@ -1,5 +1,18 @@
-export type EventCategory = 'Conference' | 'Concert' | 'Sports' | 'Workshop' | 'Festival';
-export type BookingStatus = 'confirmed' | 'cancelled';
+export const EVENT_CATEGORIES = [
+  'Conference',
+  'Concert',
+  'Sports',
+  'Workshop',
+  'Festival',
+] as const;
+
+export type EventCategory = typeof EVENT_CATEGORIES[number];
+export const BOOKING_STATUSES = [
+  'confirmed',
+  'cancelled',
+] as const;
+
+export type BookingStatus = typeof BOOKING_STATUSES[number];
 
 export interface AuthInput {
   email: string;
@@ -35,7 +48,8 @@ export interface Event {
   venue: string;
   city: string;
   eventDate: string;
-  price: number;
+  /** PostgreSQL numeric values are serialized as strings by the API. */
+  price: string;
   totalSeats: number;
   availableSeats: number;
   imageUrl: string | null;
@@ -62,7 +76,8 @@ export interface Booking {
   customerEmail: string;
   customerPhone: string;
   quantity: number;
-  totalPrice: number;
+  /** PostgreSQL numeric values are serialized as strings by the API. */
+  totalPrice: string;
   status: BookingStatus;
   bookingRef: string;
   createdAt: string;

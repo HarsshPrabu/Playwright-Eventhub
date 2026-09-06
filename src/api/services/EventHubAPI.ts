@@ -1,5 +1,5 @@
 import { APIRequestContext } from '@playwright/test';
-import { ApiResponseResult, BaseAPI } from '../BaseAPI';
+import { ApiRequestObserver, ApiResponseResult, BaseAPI } from '../BaseAPI';
 import {
   AuthInput,
   AuthResponse,
@@ -33,8 +33,8 @@ export interface BookingQuery {
 
 /** Domain API service for both public and authenticated EventHub operations. */
 export class EventHubAPI extends BaseAPI {
-  constructor(requestContext: APIRequestContext, token?: string) {
-    super(requestContext);
+  constructor(requestContext: APIRequestContext, token?: string, requestObserver?: ApiRequestObserver) {
+    super(requestContext, undefined, requestObserver);
     if (token) {
       this.setAuthToken(token);
     }

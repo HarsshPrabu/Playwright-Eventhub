@@ -1,4 +1,4 @@
-import { expect, test } from '../../../src/fixtures/base.fixture';
+import { expect, test } from '../../../src/fixtures/ui.fixture';
 import { envConfig } from '../../../src/config/env.config';
 import { ApiRequestError } from '../../../src/api/errors/ApiRequestError';
 import { TestDataManager } from '../../../test-data/TestDataManager';

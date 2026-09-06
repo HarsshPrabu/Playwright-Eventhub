@@ -17,6 +17,27 @@ export interface ApiResponseResult<T = unknown> {
   durationMs: number;
 }
 
+export interface ApiResponseDiagnostic {
+  method: string;
+  url: string;
+  status: number;
+  durationMs: number;
+  correlationId?: string;
+}
+
+export interface ApiTransportErrorDiagnostic {
+  method: string;
+  url: string;
+  durationMs: number;
+  error: string;
+}
+
+/** Optional test-observer hook. It receives only sanitized request metadata. */
+export interface ApiRequestObserver {
+  onResponse(details: ApiResponseDiagnostic): void;
+  onTransportError(details: ApiTransportErrorDiagnostic): void;
+}
+
 /**
  * BaseAPI: Foundation class for API testing and API-assisted UI testing.
  *
@@ -29,8 +50,10 @@ export class BaseAPI {
   protected baseUrl: string;
   protected defaultHeaders: Record<string, string>;
   private isExternalContext: boolean = false;
+  private readonly requestObserver?: ApiRequestObserver;
 
-  constructor(target?: APIRequestContext | Page | string, baseUrl: string = apiUrl) {
+  constructor(target?: APIRequestContext | Page | string, baseUrl: string = apiUrl, requestObserver?: ApiRequestObserver) {
+    this.requestObserver = requestObserver;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -94,87 +117,86 @@ export class BaseAPI {
    * Generic GET Request with execution duration tracking
    */
   async get(endpoint: string, options: RequestOptions = {}): Promise<APIResponse> {
-    const context = await this.getContext();
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    const startedAt = Date.now();
-    const response = await context.get(url, {
-      headers: { ...this.defaultHeaders, ...options.headers },
-      params: options.params,
-      timeout: options.timeout,
-    });
-    this.logResponse('GET', url, response, startedAt);
-    await this.validateExpectedStatus(response, 'GET', url, options.expectedStatus);
-    return response;
+    return this.execute('GET', endpoint, options, (context, url) => context.get(url, this.requestOptions(options)));
   }
 
   /**
    * Generic POST Request
    */
   async post<TBody = unknown>(endpoint: string, data?: TBody, options: RequestOptions<TBody> = {}): Promise<APIResponse> {
-    const context = await this.getContext();
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    const startedAt = Date.now();
-    const response = await context.post(url, {
-      data: data ?? options.data,
-      headers: { ...this.defaultHeaders, ...options.headers },
-      params: options.params,
-      timeout: options.timeout,
-    });
-    this.logResponse('POST', url, response, startedAt);
-    await this.validateExpectedStatus(response, 'POST', url, options.expectedStatus);
-    return response;
+    return this.execute('POST', endpoint, options, (context, url) =>
+      context.post(url, { ...this.requestOptions(options), data: data ?? options.data })
+    );
   }
 
   /**
    * Generic PUT Request
    */
   async put<TBody = unknown>(endpoint: string, data?: TBody, options: RequestOptions<TBody> = {}): Promise<APIResponse> {
-    const context = await this.getContext();
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    const startedAt = Date.now();
-    const response = await context.put(url, {
-      data: data ?? options.data,
-      headers: { ...this.defaultHeaders, ...options.headers },
-      params: options.params,
-      timeout: options.timeout,
-    });
-    this.logResponse('PUT', url, response, startedAt);
-    await this.validateExpectedStatus(response, 'PUT', url, options.expectedStatus);
-    return response;
+    return this.execute('PUT', endpoint, options, (context, url) =>
+      context.put(url, { ...this.requestOptions(options), data: data ?? options.data })
+    );
   }
 
   /**
    * Generic PATCH Request
    */
   async patch<TBody = unknown>(endpoint: string, data?: TBody, options: RequestOptions<TBody> = {}): Promise<APIResponse> {
-    const context = await this.getContext();
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    const startedAt = Date.now();
-    const response = await context.patch(url, {
-      data: data ?? options.data,
-      headers: { ...this.defaultHeaders, ...options.headers },
-      params: options.params,
-      timeout: options.timeout,
-    });
-    this.logResponse('PATCH', url, response, startedAt);
-    await this.validateExpectedStatus(response, 'PATCH', url, options.expectedStatus);
-    return response;
+    return this.execute('PATCH', endpoint, options, (context, url) =>
+      context.patch(url, { ...this.requestOptions(options), data: data ?? options.data })
+    );
   }
 
   /**
    * Generic DELETE Request
    */
   async delete(endpoint: string, options: RequestOptions = {}): Promise<APIResponse> {
-    const context = await this.getContext();
-    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    const startedAt = Date.now();
-    const response = await context.delete(url, {
+    return this.execute('DELETE', endpoint, options, (context, url) => context.delete(url, this.requestOptions(options)));
+  }
+
+  private requestOptions(options: RequestOptions): { headers: Record<string, string>; params?: RequestOptions['params']; timeout?: number } {
+    return {
       headers: { ...this.defaultHeaders, ...options.headers },
       params: options.params,
       timeout: options.timeout,
-    });
-    this.logResponse('DELETE', url, response, startedAt);
-    await this.validateExpectedStatus(response, 'DELETE', url, options.expectedStatus);
+    };
+  }
+
+  private async execute(
+    method: string,
+    endpoint: string,
+    options: RequestOptions,
+    send: (context: APIRequestContext, url: string) => Promise<APIResponse>,
+  ): Promise<APIResponse> {
+    const context = await this.getContext();
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const startedAt = Date.now();
+    let response: APIResponse;
+
+    try {
+      response = await send(context, url);
+    } catch (error) {
+      const durationMs = Date.now() - startedAt;
+      this.requestObserver?.onTransportError({
+        method,
+        url: this.sanitizeUrl(url),
+        durationMs,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    const durationMs = Date.now() - startedAt;
+    const diagnostic: ApiResponseDiagnostic = {
+      method,
+      url: this.sanitizeUrl(url),
+      status: response.status(),
+      durationMs,
+      correlationId: this.getCorrelationId(response),
+    };
+    this.requestObserver?.onResponse(diagnostic);
+    this.logResponse(diagnostic);
+    await this.validateExpectedStatus(response, method, url, options.expectedStatus);
     return response;
   }
 
@@ -327,14 +349,27 @@ export class BaseAPI {
     return headers['x-request-id'] ?? headers['x-correlation-id'];
   }
 
-  private logResponse(method: string, url: string, response: APIResponse, startedAt: number): void {
+  private sanitizeUrl(value: string): string {
+    try {
+      const url = new URL(value);
+      for (const key of [...url.searchParams.keys()]) {
+        if (/token|authorization|password|secret|api[_-]?key/i.test(key)) {
+          url.searchParams.set(key, '[REDACTED]');
+        }
+      }
+      return url.toString();
+    } catch {
+      return value;
+    }
+  }
+
+  private logResponse(diagnostic: ApiResponseDiagnostic): void {
     if (!envConfig.debugApi) {
       return;
     }
 
-    const correlationId = this.getCorrelationId(response);
-    const suffix = correlationId ? ` correlationId=${correlationId}` : '';
-    console.debug(`[API] ${method} ${url} -> ${response.status()} (${Date.now() - startedAt}ms)${suffix}`);
+    const suffix = diagnostic.correlationId ? ` correlationId=${diagnostic.correlationId}` : '';
+    console.debug(`[API] ${diagnostic.method} ${diagnostic.url} -> ${diagnostic.status} (${diagnostic.durationMs}ms)${suffix}`);
   }
 
   /**

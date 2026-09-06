@@ -1,4 +1,4 @@
-import { expect, test } from '../../src/fixtures/base.fixture';
+import { expect, test } from '../../src/fixtures/api.fixture';
 import { envConfig } from '../../src/config/env.config';
 import { TestDataManager } from '../../test-data/TestDataManager';
 import { eventBookingScenarios } from '../../test-data/scenarios/event-booking.data';

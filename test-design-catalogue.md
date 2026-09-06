@@ -123,8 +123,6 @@ The live user/admin role was available for exploration. A separate standard-user
 | API-004 | Return correctly shaped paginated booking data | Request supported page/limit/status/event filters | Records, ownership/admin scope, status, and pagination metadata are consistent | P1 | API / Security | Customer, Admin | AUTOMATE | `GET /bookings` |
 | API-005 | Keep UI and API consistent after event creation/edit/delete | Mutate event through admin UI, then query it; repeat for update/delete | API state matches UI state and no stale record remains | P1 | Integration | Admin | AUTOMATE | Event CRUD endpoints |
 | API-006 | Keep UI and API consistent after booking/cancellation | Create booking, view it in customer/admin pages, cancel it, and query again | Reference, status, seat counts, and totals agree across all views | P0 | Integration | Customer, Admin | AUTOMATE | Booking create/detail/delete endpoints |
-| API-007 | Handle malformed/empty/unexpected API responses | Return empty body, malformed JSON, HTML error, or unexpected schema through controlled simulation | Framework/application shows a meaningful error state and does not report false success | P1 | Resilience / API | Customer, Admin | AUTOMATE | All observed API consumers; response handling |
-| API-008 | Maintain correlation and useful diagnostics on API failure | Controlled failing request includes status/body/correlation header where supported | Failure is diagnosable without logging secrets or customer passwords/tokens | P2 | API / Resilience | Customer, Admin | AUTOMATE | Base API/error handling; supportability |
 
 ## 3. Coverage Matrix
 
@@ -138,9 +136,9 @@ The live user/admin role was available for exploration. A separate standard-user
 | Customer bookings/refund | 10 | BKG-CUST-001–007, BKG-DETAIL-001–003 | Ownership, state transitions, empty, refund, persistence | Customer | P0:3, P1:6, P2:1 |
 | Admin events | 10 | ADM-EVT-001–010 | Permissions, CRUD, validation, destructive, limits, failures | Admin/Customer/Anonymous | P0:1, P1:8, P2:1 |
 | Admin bookings | 7 | ADM-BKG-001–007 | Filter, modal, cancellation, empty, limits, failure | Admin/Customer | P0:1, P1:4, P2:2 |
-| API/cross-page integration | 8 | API-001–API-008 | Contract, auth, persistence, malformed responses, diagnostics | All | P0:3, P1:4, P2:1 |
+| API/cross-page integration | 6 | API-001–API-006 | Contract, auth, persistence, and UI/API consistency | All | P0:3, P1:3 |
 
-The catalogue contains 72 scenarios. `EVT-SEARCH-010`, capacity-limit cases, and several role/error cases are conditional until the corresponding application behavior is confirmed.
+The catalogue contains 70 application scenarios. `EVT-SEARCH-010`, capacity-limit cases, and several role/error cases are conditional until the corresponding application behavior is confirmed. Framework parser/diagnostic tests are intentionally out of scope for this application catalogue.
 
 ## 4. Business Rule Coverage
 
@@ -200,15 +198,15 @@ The catalogue contains 72 scenarios. `EVT-SEARCH-010`, capacity-limit cases, and
 
 ## 8. Error / Resilience Coverage
 
-Covered by the catalogue: auth 4xx, protected-route denial, missing resources, empty collections, event/booking mutation failures, timeout behavior, insufficient seats, duplicate submission, repeated cancellation, malformed/empty API responses, and diagnostic safety.
+Covered by the catalogue: auth 4xx, protected-route denial, missing resources, empty collections, event/booking mutation failures, timeout behavior, insufficient seats, duplicate submission, and repeated cancellation.
 
-The live application’s exact error payloads, timeout UX, and retry policy were not fully observable. These should be confirmed with controlled response simulation before finalising expected messages.
+The live application’s exact error payloads, timeout UX, and retry policy were not fully observable. These should be confirmed with application-level response mocking before finalising expected messages.
 
 ## 9. Automation Suitability Summary
 
 | Classification | Approximate count | Examples |
 |---|---:|---|
-| AUTOMATE | 72 | All deterministic functional, API, validation, state, permission, persistence, and error scenarios listed |
+| AUTOMATE | 70 | All deterministic functional, API, validation, state, permission, persistence, and error scenarios listed |
 | MANUAL | 0 currently required | No scenario is inherently unsuitable; visual/accessibility review can supplement automation |
 | HYBRID | 3 recommended supplements | Responsive layout/navigation, visual quality of error/empty states, real browser/storage behavior across supported browsers |
 | DO NOT AUTOMATE | 0 | No identified scenario has sufficiently poor ROI to exclude from the catalogue |

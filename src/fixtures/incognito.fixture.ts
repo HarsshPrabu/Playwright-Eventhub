@@ -33,11 +33,7 @@ export const test = isIncognito
           httpCredentials,
           args: [
             '--incognito',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-web-security',
-            '--allow-running-insecure-content',
             '--start-maximized',
           ],
         });

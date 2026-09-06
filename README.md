@@ -15,7 +15,7 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 - Optional worker-scoped PostgreSQL pool for database tests.
 - Authentication setup with reusable Playwright `storageState`.
 - Chromium, Firefox, and WebKit projects.
-- HTML reports, traces, screenshots, and JSON results on failure.
+- BA-readable terminal steps plus HTML reports, traces, screenshots, video, and sanitized UI/API failure diagnostics.
 
 ## Project structure
 
@@ -152,6 +152,42 @@ Set `WORKERS` to tune parallelism for a CI environment. If it is not set, Playwr
 The UI projects depend on `tests/auth/auth.setup.ts` and reuse
 `playwright/.auth/user.json`. Authenticated tests require `USER_NAME` and
 `USER_PASSWORD`.
+
+## UI failure diagnostics
+
+UI tests use `src/fixtures/ui.fixture.ts`. On an unexpected failure, the HTML
+report includes the current URL, browser console errors, page errors, failed
+network requests, and `4xx`/`5xx` document or API responses. URLs are sanitized
+for sensitive query parameters; tokens, authorization headers, passwords, and
+response bodies are not attached. Terminal output prints each `test.step()`.
+
+Set `UI_DIAGNOSTICS` to control these lightweight text attachments:
+
+```text
+failure  # default: attach only unexpected failures
+always   # attach every UI test's diagnostics, including passes
+off      # do not attach UI diagnostics
+```
+
+Screenshots, video, and traces remain failure-only to prevent excessive report
+and CI artifact storage.
+
+## API failure diagnostics
+
+API tests use `src/fixtures/api.fixture.ts`. An unexpected failure receives an
+`api-call-summary` attachment containing up to 50 sanitized request summaries:
+HTTP method, endpoint, response status, duration, and a correlation ID when the
+service returns one. It deliberately excludes authorization headers, tokens,
+passwords, request bodies, and response bodies. Transport-error text is
+sanitized before it is attached.
+
+Set `API_DIAGNOSTICS` to control attachment creation:
+
+```text
+failure  # default: attach only unexpected failures
+always   # attach every API test's summary, including passes
+off      # do not attach API summaries
+```
 
 ## GitHub Actions
 

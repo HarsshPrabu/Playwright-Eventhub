@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 type RawEnvironment = Record<string, string>;
 const supportedEnvironments = ['dev', 'qa', 'staging', 'prod'] as const;
 type EnvironmentName = typeof supportedEnvironments[number];
+export type DiagnosticsMode = 'off' | 'failure' | 'always';
 
 function readEnvFile(filePath: string): RawEnvironment {
   return fs.existsSync(filePath) ? dotenv.parse(fs.readFileSync(filePath)) : {};
@@ -57,6 +58,12 @@ function positiveInteger(name: string, fallback: number): number {
   return parsed;
 }
 
+function diagnosticsModeValue(name: string): DiagnosticsMode {
+  const value = values[name] ?? 'failure';
+  if (value === 'off' || value === 'failure' || value === 'always') return value;
+  throw new Error(`${name} must be one of: off, failure, always.`);
+}
+
 const defaultBaseUrl = isCI ? undefined : 'https://eventhub.rahulshettyacademy.com';
 const defaultApiUrl = isCI ? undefined : 'https://api.eventhub.rahulshettyacademy.com/api';
 
@@ -68,6 +75,8 @@ export interface EnvironmentConfig {
   headless: boolean;
   incognito: boolean;
   debugApi: boolean;
+  uiDiagnostics: DiagnosticsMode;
+  apiDiagnostics: DiagnosticsMode;
   ignoreHTTPSErrors: boolean;
   workers?: number;
   timeout: { default: number; navigation: number; action: number; expect: number };
@@ -91,6 +100,8 @@ export const envConfig: EnvironmentConfig = {
   headless: booleanValue('HEADLESS', true),
   incognito: booleanValue('INCOGNITO', false),
   debugApi: booleanValue('DEBUG_API', false),
+  uiDiagnostics: diagnosticsModeValue('UI_DIAGNOSTICS'),
+  apiDiagnostics: diagnosticsModeValue('API_DIAGNOSTICS'),
   ignoreHTTPSErrors: booleanValue('IGNORE_HTTPS_ERRORS', false),
   workers: values.WORKERS ? positiveInteger('WORKERS', 1) : undefined,
   timeout: {

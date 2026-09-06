@@ -1,4 +1,4 @@
-import { expect, test } from '../../../src/fixtures/base.fixture';
+import { expect, test } from '../../../src/fixtures/ui.fixture';
 
 test.describe('P0 Booking authorization', { tag: '@p0' }, () => {
   test.use({ storageState: { cookies: [], origins: [] } });
