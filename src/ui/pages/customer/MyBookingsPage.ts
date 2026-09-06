@@ -67,6 +67,10 @@ export class MyBookingsPage extends BasePage {
       response.ok()
     );
     await this.bookingCard(bookingReference).getByTestId('cancel-booking-btn').click();
+    await this.page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Yes, cancel it', exact: true })
+      .click();
     await responsePromise;
   }
 

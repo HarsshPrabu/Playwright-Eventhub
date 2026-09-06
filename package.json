@@ -8,6 +8,7 @@
     "test:headed": "cross-env HEADLESS=false npx playwright test",
     "test:chromium": "npx playwright test --project=chromium",
     "test:e2e": "npx playwright test --project=chromium",
+    "test:p0": "npx playwright test --grep @p0 --project=chromium --project=api",
     "test:api": "npx playwright test tests/api/",
     "test:dev": "cross-env TEST_ENV=dev npx playwright test",
     "test:qa": "cross-env TEST_ENV=qa npx playwright test",
@@ -25,6 +26,7 @@
   ],
   "license": "ISC",
   "devDependencies": {
+    "@playwright/cli": "^0.1.19",
     "@playwright/test": "^1.63.0",
     "@types/luxon": "^3.7.1",
     "@types/node": "^26.4.0",

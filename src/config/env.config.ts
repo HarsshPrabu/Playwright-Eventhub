@@ -69,6 +69,7 @@ export interface EnvironmentConfig {
   incognito: boolean;
   debugApi: boolean;
   ignoreHTTPSErrors: boolean;
+  workers?: number;
   timeout: { default: number; navigation: number; action: number; expect: number };
   credentials: { userName?: string; password?: string };
   database: {
@@ -91,6 +92,7 @@ export const envConfig: EnvironmentConfig = {
   incognito: booleanValue('INCOGNITO', false),
   debugApi: booleanValue('DEBUG_API', false),
   ignoreHTTPSErrors: booleanValue('IGNORE_HTTPS_ERRORS', false),
+  workers: values.WORKERS ? positiveInteger('WORKERS', 1) : undefined,
   timeout: {
     default: positiveInteger('DEFAULT_TIMEOUT', 30000),
     navigation: positiveInteger('NAVIGATION_TIMEOUT', 30000),

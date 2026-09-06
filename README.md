@@ -33,20 +33,16 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 │   │   └── services/EventHubAPI.ts
 │   ├── ui/
 │   │   ├── components/
-│   │   ├── admin/
-│   │   │   ├── AdminBookingDetailsModal.ts
-│   │   │   ├── AdminBookingRow.ts
-│   │   │   ├── AdminEventForm.ts
-│   │   │   ├── AdminEventRow.ts
-│   │   │   └── AdminNavigation.ts
-│   │   ├── bookings/BookingDetailsSection.ts
-│   │   ├── events/
-│   │   │   ├── BookingConfirmation.ts
-│   │   │   ├── EventCard.ts
-│   │   │   ├── EventSummary.ts
-│   │   │   └── TicketBookingForm.ts
-│   │   ├── feedback/NotificationToast.ts
-│   │   └── navigation/AppHeader.ts
+│   │   │   ├── admin/
+│   │   │   ├── bookings/
+│   │   │   ├── events/
+│   │   │   ├── feedback/
+│   │   │   └── navigation/
+│   │   └── pages/
+│   │       ├── BasePage.ts
+│   │       ├── auth/
+│   │       ├── customer/
+│   │       └── admin/
 │   ├── config/env.config.ts      # Validated environment configuration
 │   ├── db/
 │   │   ├── DatabasePool.ts       # Optional worker-scoped PostgreSQL pool
@@ -64,27 +60,20 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 │   │   ├── UiActions.ts
 │   │   ├── ValidationUtil.ts
 │   │   └── WaitHelper.ts
-│   │   └── pages/
-│   │   ├── BasePage.ts
-│   │   ├── auth/LoginPage.ts
-│   │   ├── auth/RegisterPage.ts
-│   │   ├── customer/
-│   │   │   ├── BookingDetailsPage.ts
-│   │   │   ├── EventDetailsPage.ts
-│   │   │   ├── EventsPage.ts
-│   │   │   ├── HomePage.ts
-│   │   │   └── MyBookingsPage.ts
-│   │   └── admin/
-│   │       ├── AdminBookingsPage.ts
-│   │       └── AdminEventsPage.ts
 │   └── tools/
 │       ├── mcp/agility-mcp-server.js
 │       └── legacy/gitlab-mcp-server.js
 ├── tests/
-│   ├── api/eventhub.api.spec.ts
 │   ├── auth/auth.setup.ts          # Creates playwright/.auth/user.json
-│   ├── customer/                   # Customer journeys and booking flows
-│   └── admin/                      # Administrative journeys
+│   ├── ui/                         # Browser journeys by domain
+│   │   ├── auth/
+│   │   ├── customer/
+│   │   └── admin/
+│   └── api/                        # Direct API contract/integration tests
+├── test-data/                      # Reusable test-data builders and cleanup
+│   ├── factories/                  # Reusable entity builders
+│   ├── scenarios/                  # Named data profiles for test groups
+│   └── TestDataManager.ts          # Test-owned creation and cleanup
 ├── playwright.config.ts
 ├── package.json
 └── tsconfig.json
@@ -148,12 +137,15 @@ environment variables directly.
 | `npm run test:headed` | Run all tests with visible browsers |
 | `npm run test:chromium` | Run the Chromium project |
 | `npm run test:e2e` | Run E2E UI specs |
+| `npm run test:p0` | Run the release-blocking P0 catalogue (Chromium + API) |
 | `npm run test:api` | Run API specs |
 | `npm run test:dev` | Run against the development environment |
 | `npm run test:qa` | Run against the QA environment |
 | `npm run test:prod` | Run against the production environment |
 | `npm run typecheck` | Validate TypeScript without running tests |
 | `npm run report` | Open the HTML report |
+
+Set `WORKERS` to tune parallelism for a CI environment. If it is not set, Playwright chooses its default worker count; P0 tests are designed to remain independent under parallel execution.
 | `npx playwright test --project=api` | Run only the API project |
 | `npx playwright test --project=firefox` | Run only Firefox |
 

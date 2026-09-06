@@ -65,7 +65,7 @@ export class AdminBookingsPage extends BasePage {
     const confirmationDialog = this.page.getByRole('dialog');
     if (await confirmationDialog.isVisible()) {
       await confirmationDialog
-        .getByRole('button', { name: /Cancel booking|Confirm|Cancel/i })
+        .getByRole('button', { name: 'Yes, cancel it', exact: true })
         .click();
     }
 
