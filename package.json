@@ -1,8 +1,7 @@
 {
-  "name": "playwright-automation-framework",
+  "name": "eventhub-playwright-tests",
   "version": "1.0.0",
-  "description": "Enterprise End-to-End and API Test Automation Framework using Playwright and TypeScript",
-  "main": "index.js",
+  "description": "EventHub UI and API test automation with Playwright and TypeScript",
   "scripts": {
     "test": "npx playwright test",
     "test:headed": "cross-env HEADLESS=false npx playwright test",
@@ -28,25 +27,14 @@
   "devDependencies": {
     "@playwright/cli": "^0.1.19",
     "@playwright/test": "^1.63.0",
-    "@types/luxon": "^3.7.1",
     "@types/node": "^26.4.0",
     "@types/pg": "^8.20.0",
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "playwright": "^1.63.0",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "luxon": "^3.7.2",
     "pg": "^8.20.0"
-  },
-  "overrides": {
-    "hono": "4.12.34",
-    "fast-uri": "3.1.6",
-    "qs": "6.16.0",
-    "diff": "4.0.4",
-    "ip-address": "10.4.0"
   }
 }

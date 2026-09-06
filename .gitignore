@@ -16,10 +16,6 @@ blob-report/
 # Agent-driven Playwright CLI snapshots and session artifacts
 .playwright-cli/
 
-# Test data files (generated during test runs)
-test-data/shared-PNR-data.json
-test-data/shared-flight-data.json
-
 
 # IDE files
 .vscode/*

@@ -4,15 +4,18 @@ TypeScript-based UI and REST API test automation for EventHub, built with
 [Playwright](https://playwright.dev/).
 
 The framework uses page objects, focused helpers, typed configuration, Playwright
-fixtures, API services, optional database support, and GitHub Actions CI.
+fixtures, API services, PostgreSQL database support, and GitHub Actions CI.
+
+See the [architecture document](docs/architecture.md) for execution flows,
+layer boundaries, data ownership, diagnostics, and CI design.
 
 ## Key features
 
 - Page Object Model with a minimal `BasePage`.
-- Single-responsibility UI, wait, API-wait, storage, dialog, screenshot, and validation helpers.
+- Single-responsibility UI, wait, API-wait, storage, dialog, and screenshot helpers.
 - Typed environment configuration with deterministic precedence.
 - EventHub API client built on Playwright's `APIRequestContext`.
-- Optional worker-scoped PostgreSQL pool for database tests.
+- Worker-scoped PostgreSQL pool for database-backed tests.
 - Authentication setup with reusable Playwright `storageState`.
 - Chromium, Firefox, and WebKit projects.
 - BA-readable terminal steps plus HTML reports, traces, screenshots, video, and sanitized UI/API failure diagnostics.
@@ -22,7 +25,7 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 ```text
 ├── .env.example
 ├── .github/workflows/
-│   ├── pull-request.yml          # Typecheck on pull requests
+│   ├── pull-request.yml          # Audit, typecheck, API + Chromium on same-repo PRs
 │   ├── main-integration.yml      # API + Chromium on main
 │   └── nightly-regression.yml    # Full cross-browser scheduled run
 ├── src/
@@ -45,24 +48,22 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 │   │       └── admin/
 │   ├── config/env.config.ts      # Validated environment configuration
 │   ├── db/
-│   │   ├── DatabasePool.ts       # Optional worker-scoped PostgreSQL pool
+│   │   ├── DatabasePool.ts       # Worker-scoped PostgreSQL pool
 │   │   └── databaseConfig.ts
 │   ├── fixtures/
-│   │   ├── base.fixture.ts       # Pages, API clients, and helpers
-│   │   └── incognito.fixture.ts
+│   │   ├── api.fixture.ts        # API tests with failure diagnostics
+│   │   ├── base.fixture.ts       # Pages, API clients, database, and helpers
+│   │   ├── diagnostics/          # Sanitized UI and API diagnostic collectors
+│   │   ├── incognito.fixture.ts
+│   │   └── ui.fixture.ts         # UI tests with failure diagnostics
 │   ├── helpers/
 │   │   ├── ApiWaitHelper.ts
-│   │   ├── DateTimeUtil.ts
 │   │   ├── DialogHelper.ts
 │   │   ├── ScreenshotHelper.ts
 │   │   ├── StorageHelper.ts
 │   │   ├── TestDataUtil.ts
 │   │   ├── UiActions.ts
-│   │   ├── ValidationUtil.ts
 │   │   └── WaitHelper.ts
-│   └── tools/
-│       ├── mcp/agility-mcp-server.js
-│       └── legacy/gitlab-mcp-server.js
 ├── tests/
 │   ├── auth/auth.setup.ts          # Creates playwright/.auth/user.json
 │   ├── ui/                         # Browser journeys by domain
@@ -91,6 +92,17 @@ Use the lockfile for reproducible installation:
 
 ```bash
 npm ci
+```
+
+On Windows and macOS:
+
+```bash
+npx playwright install
+```
+
+On Linux, install browser system dependencies too:
+
+```bash
 npx playwright install --with-deps
 ```
 
@@ -144,10 +156,10 @@ environment variables directly.
 | `npm run test:prod` | Run against the production environment |
 | `npm run typecheck` | Validate TypeScript without running tests |
 | `npm run report` | Open the HTML report |
-
-Set `WORKERS` to tune parallelism for a CI environment. If it is not set, Playwright chooses its default worker count; P0 tests are designed to remain independent under parallel execution.
 | `npx playwright test --project=api` | Run only the API project |
 | `npx playwright test --project=firefox` | Run only Firefox |
+
+Set `WORKERS` to tune parallelism for a CI environment. If it is not set, Playwright chooses its default worker count; P0 tests are designed to remain independent under parallel execution.
 
 The UI projects depend on `tests/auth/auth.setup.ts` and reuse
 `playwright/.auth/user.json`. Authenticated tests require `USER_NAME` and
@@ -169,8 +181,9 @@ always   # attach every UI test's diagnostics, including passes
 off      # do not attach UI diagnostics
 ```
 
-Screenshots, video, and traces remain failure-only to prevent excessive report
-and CI artifact storage.
+Screenshots are captured for every test outcome. CI uploads reports and test
+results only after failed runs; video and trace retention follow the Playwright
+project configuration.
 
 ## API failure diagnostics
 
@@ -193,7 +206,7 @@ off      # do not attach API summaries
 
 Three workflows are committed under `.github/workflows/`:
 
-- Pull requests to `main`: install dependencies and run typechecking.
+- Pull requests to `main`: audit production dependencies and typecheck. Same-repository PRs also run API and Chromium integration tests; fork PRs skip credentialed integration tests.
 - Pushes to `main`: run API and Chromium integration tests.
 - Nightly/manual execution: run API plus Chromium, Firefox, and WebKit.
 
@@ -212,52 +225,52 @@ USER_PASSWORD
 ```
 
 CI uses `npm ci`, Node.js 22, `CI=true`, and installs only the browsers needed
-by each workflow. Reports and test results are uploaded as workflow artifacts.
-Do not commit `.env` files, credentials, tokens, or generated authentication
-state.
+by each workflow. Reports and test results are uploaded as workflow artifacts
+after failed runs. Do not commit `.env` files, credentials, tokens, or generated
+authentication state.
 
-## Optional database testing
+## PostgreSQL database testing
 
-Database access is not required for the UI or API suites. If database tests are
-introduced, use the worker-scoped `DatabasePool` fixture and provide the
-corresponding `DB_*` settings. Tests must own their data and clean up explicitly;
-the framework does not require a database for normal execution.
+PostgreSQL support is available through the worker-scoped `DatabasePool` fixture.
+Provide the corresponding `DB_*` settings for database-backed tests. Tests must
+own their data and clean up explicitly; normal UI and API specs do not open a
+database connection unless they request the `dbPool` fixture.
 
 ## Adding a page object and test
 
-Create a focused page object in `src/ui/pages/`:
+Create a focused EventHub page object in `src/ui/pages/`:
 
 ```typescript
 import { Locator, Page } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { BasePage } from '../BasePage';
 
-export class ProductsPage extends BasePage {
-  readonly productList: Locator;
+export class EventsPage extends BasePage {
+  readonly eventCards: Locator;
   readonly searchInput: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.productList = page.locator('.product-card');
+    this.eventCards = page.getByRole('main').getByTestId('event-card');
     this.searchInput = page.locator('input[type="search"]');
   }
 
-  async searchProduct(name: string): Promise<void> {
-    await this.searchInput.fill(name);
-    await this.searchInput.press('Enter');
+  async searchEvents(query: string): Promise<void> {
+    await this.searchInput.fill(query);
   }
 }
 ```
 
 Register the page in `src/fixtures/base.fixture.ts` when it is shared by
-multiple tests, then create a spec under `tests/customer/` or `tests/admin/`:
+multiple tests, then create a spec under `tests/ui/customer/` or
+`tests/ui/admin/`:
 
 ```typescript
-import { expect, test } from '../../src/fixtures/base.fixture';
+import { expect, test } from '../../../src/fixtures/ui.fixture';
 
-test('finds a product by search', async ({ page, productsPage }) => {
-  await page.goto('/products');
-  await productsPage.searchProduct('Laptop');
-  await expect(productsPage.productList.first()).toBeVisible();
+test('finds an event by search', async ({ eventsPage }) => {
+  await eventsPage.navigate();
+  await eventsPage.searchEvents('conference');
+  await expect(eventsPage.eventCards.first()).toBeVisible();
 });
 ```
 
