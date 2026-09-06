@@ -1,24 +1,21 @@
-# EventHub Playwright Test Framework
+# EventHub Test Automation Framework — Playwright + TypeScript
 
-TypeScript-based UI and REST API test automation for EventHub, built with
-[Playwright](https://playwright.dev/).
-
-The framework uses page objects, focused helpers, typed configuration, Playwright
-fixtures, API services, PostgreSQL database support, and GitHub Actions CI.
+A production-style UI and REST API test automation framework for EventHub, built with Playwright and TypeScript. It demonstrates scalable test architecture, reusable fixtures, API-driven setup, PostgreSQL integration, failure diagnostics, cross-browser execution, and CI/CD automation with GitHub Actions.
 
 See the [architecture document](docs/architecture.md) for execution flows,
 layer boundaries, data ownership, diagnostics, and CI design.
 
-## Key features
+## What this project demonstrates
 
-- Page Object Model with a minimal `BasePage`.
-- Single-responsibility UI, wait, API-wait, storage, dialog, and screenshot helpers.
-- Typed environment configuration with deterministic precedence.
-- EventHub API client built on Playwright's `APIRequestContext`.
-- Worker-scoped PostgreSQL pool for database-backed tests.
-- Authentication setup with reusable Playwright `storageState`.
-- Chromium, Firefox, and WebKit projects.
-- BA-readable terminal steps plus HTML reports, traces, screenshots, video, and sanitized UI/API failure diagnostics.
+- A scalable Playwright and TypeScript architecture for UI, REST API, and API-assisted end-to-end testing
+- Clear separation of page objects, reusable components, fixtures, helpers, API services, configuration, and test data
+- API-driven creation and deterministic cleanup of test-owned data
+- Independent, parallel-ready test design with cross-browser execution
+- Validated, centralized configuration with environment-specific overrides and CI-safe precedence
+- Actionable failure diagnostics for UI and API tests, with secret-safe report attachments
+- Optional worker-scoped PostgreSQL support for database-backed validation
+- GitHub Actions quality gates, integration execution, and scheduled cross-browser regression
+- AI-assisted repository workflows for engineering guidance, code review, and commit-message generation
 
 ## Project structure
 
