@@ -1,8 +1,8 @@
-import { expect, test } from '../../src/fixtures/base.fixture';
-import { envConfig } from '../../src/config/env.config';
-import { TestDataManager } from '../../test-data/TestDataManager';
+import { expect, test } from '../../../src/fixtures/base.fixture';
+import { envConfig } from '../../../src/config/env.config';
+import { TestDataManager } from '../../../test-data/TestDataManager';
 
-test.describe('P0 Booking consistency', { tag: '@p0' }, () => {
+test.describe('P0 Customer booking consistency', { tag: '@p0' }, () => {
   test('API-006: Keep UI and API consistent after booking cancellation', async ({
     myBookingsPage,
     authenticatedEventHubApi,
@@ -15,10 +15,13 @@ test.describe('P0 Booking consistency', { tag: '@p0' }, () => {
       }));
       await test.step('Open the customer bookings page', () => myBookingsPage.navigate());
       await test.step('Cancel the booking from the UI', () => myBookingsPage.cancelBooking(booking.bookingRef));
-      await test.step('Verify the UI and API show the same cancelled state', async () => {
-        await expect(myBookingsPage.bookingCard(booking.bookingRef)).toContainText('cancelled');
-        const persisted = await authenticatedEventHubApi.getBooking(booking.id);
-        expect(persisted.data.data.status).toBe('cancelled');
+      await test.step('Refresh My Bookings after cancellation', () => myBookingsPage.navigate());
+      await test.step('Verify the booking is removed from the UI and API', async () => {
+        expect(await myBookingsPage.isBookingVisible(booking.bookingRef)).toBe(false);
+        const response = await authenticatedEventHubApi.get(`/bookings/${booking.id}`, {
+          expectedStatus: 404,
+        });
+        expect(response.status()).toBe(404);
       });
       await test.step('Verify event availability remains consistent', async () => {
         const persistedEvent = await authenticatedEventHubApi.getEvent(event.id);
