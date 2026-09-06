@@ -1,6 +1,6 @@
 import { Page, Locator } from "@playwright/test";
-import { NotificationToast } from '../components/NotificationToast';
-import { BasePage } from "./BasePage";
+import { NotificationToast } from '../../components/feedback/NotificationToast';
+import { BasePage } from '../BasePage';
 
 export class LoginPage extends BasePage {
   // Primary input fields
@@ -13,6 +13,8 @@ export class LoginPage extends BasePage {
   readonly loginHeading: Locator;
   // Registration link
   readonly registerLink: Locator;
+  readonly emailError: Locator;
+  readonly passwordError: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -25,6 +27,8 @@ export class LoginPage extends BasePage {
       exact: true,
     });
     this.registerLink = page.getByRole('link', { name: 'Register', exact: true });
+    this.emailError = page.getByTestId('login-email-error');
+    this.passwordError = page.getByTestId('login-password-error');
   }
 
   /** Navigate directly to the EventHub login page */
@@ -64,6 +68,14 @@ export class LoginPage extends BasePage {
   /** Dismiss the login error toast */
   async dismissLoginError(): Promise<void> {
     await this.notificationToast.dismiss();
+  }
+
+  async getEmailValidationMessage(): Promise<string> {
+    return (await this.emailInput.evaluate((input: HTMLInputElement) => input.validationMessage)).trim();
+  }
+
+  async getPasswordValidationMessage(): Promise<string> {
+    return (await this.passwordInput.evaluate((input: HTMLInputElement) => input.validationMessage)).trim();
   }
 
   async isLoginButtonEnabled(): Promise<boolean> { return await this.loginButton.isEnabled(); }

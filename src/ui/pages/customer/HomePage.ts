@@ -1,8 +1,8 @@
 import { Locator, Page } from '@playwright/test';
-import { ApiWaitHelper } from '../helpers/ApiWaitHelper';
-import { AppHeader, AppSection } from '../components/AppHeader';
-import { EventCard } from '../components/EventCard';
-import { BasePage } from './BasePage';
+import { ApiWaitHelper } from '../../../helpers/ApiWaitHelper';
+import { AppHeader, AppSection } from '../../components/navigation/AppHeader';
+import { EventCard } from '../../components/events/EventCard';
+import { BasePage } from '../BasePage';
 
 /** Page object for the authenticated EventHub home page. */
 export class HomePage extends BasePage {

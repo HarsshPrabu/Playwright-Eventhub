@@ -31,10 +31,22 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 │   │   ├── errors/ApiRequestError.ts
 │   │   ├── models/EventHubModels.ts
 │   │   └── services/EventHubAPI.ts
-│   ├── components/
-│   │   ├── AppHeader.ts
-│   │   ├── EventCard.ts
-│   │   └── NotificationToast.ts
+│   ├── ui/
+│   │   ├── components/
+│   │   ├── admin/
+│   │   │   ├── AdminBookingDetailsModal.ts
+│   │   │   ├── AdminBookingRow.ts
+│   │   │   ├── AdminEventForm.ts
+│   │   │   ├── AdminEventRow.ts
+│   │   │   └── AdminNavigation.ts
+│   │   ├── bookings/BookingDetailsSection.ts
+│   │   ├── events/
+│   │   │   ├── BookingConfirmation.ts
+│   │   │   ├── EventCard.ts
+│   │   │   ├── EventSummary.ts
+│   │   │   └── TicketBookingForm.ts
+│   │   ├── feedback/NotificationToast.ts
+│   │   └── navigation/AppHeader.ts
 │   ├── config/env.config.ts      # Validated environment configuration
 │   ├── db/
 │   │   ├── DatabasePool.ts       # Optional worker-scoped PostgreSQL pool
@@ -52,17 +64,27 @@ fixtures, API services, optional database support, and GitHub Actions CI.
 │   │   ├── UiActions.ts
 │   │   ├── ValidationUtil.ts
 │   │   └── WaitHelper.ts
-│   └── pages/
-│       ├── BasePage.ts
-│       ├── HomePage.ts
-│       └── LoginPage.ts
-├── test-data/                   # Static test data
+│   │   └── pages/
+│   │   ├── BasePage.ts
+│   │   ├── auth/LoginPage.ts
+│   │   ├── auth/RegisterPage.ts
+│   │   ├── customer/
+│   │   │   ├── BookingDetailsPage.ts
+│   │   │   ├── EventDetailsPage.ts
+│   │   │   ├── EventsPage.ts
+│   │   │   ├── HomePage.ts
+│   │   │   └── MyBookingsPage.ts
+│   │   └── admin/
+│   │       ├── AdminBookingsPage.ts
+│   │       └── AdminEventsPage.ts
+│   └── tools/
+│       ├── mcp/agility-mcp-server.js
+│       └── legacy/gitlab-mcp-server.js
 ├── tests/
 │   ├── api/eventhub.api.spec.ts
-│   ├── auth.setup.ts             # Creates playwright/.auth/user.json
-│   └── e2e/
-│       ├── eventhub-home.sanity.spec.ts
-│       └── smoke.spec.ts
+│   ├── auth/auth.setup.ts          # Creates playwright/.auth/user.json
+│   ├── customer/                   # Customer journeys and booking flows
+│   └── admin/                      # Administrative journeys
 ├── playwright.config.ts
 ├── package.json
 └── tsconfig.json
@@ -135,7 +157,7 @@ environment variables directly.
 | `npx playwright test --project=api` | Run only the API project |
 | `npx playwright test --project=firefox` | Run only Firefox |
 
-The UI projects depend on `tests/auth.setup.ts` and reuse
+The UI projects depend on `tests/auth/auth.setup.ts` and reuse
 `playwright/.auth/user.json`. Authenticated tests require `USER_NAME` and
 `USER_PASSWORD`.
 
@@ -175,7 +197,7 @@ the framework does not require a database for normal execution.
 
 ## Adding a page object and test
 
-Create a focused page object in `src/pages/`:
+Create a focused page object in `src/ui/pages/`:
 
 ```typescript
 import { Locator, Page } from '@playwright/test';
@@ -199,7 +221,7 @@ export class ProductsPage extends BasePage {
 ```
 
 Register the page in `src/fixtures/base.fixture.ts` when it is shared by
-multiple tests, then create a spec under `tests/e2e/`:
+multiple tests, then create a spec under `tests/customer/` or `tests/admin/`:
 
 ```typescript
 import { expect, test } from '../../src/fixtures/base.fixture';

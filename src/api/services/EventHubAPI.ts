@@ -68,6 +68,10 @@ export class EventHubAPI extends BaseAPI {
     });
   }
 
+  async getBookingsForEvent(eventId: number): Promise<ApiResponseResult<PaginatedResponse<Booking>>> {
+    return this.getBookings({ eventId, limit: 100 });
+  }
+
   async getCurrentUser(): Promise<ApiResponseResult<MeResponse>> {
     this.requireAuth('getCurrentUser');
     return this.getJson<MeResponse>('/auth/me', { expectedStatus: 200 });

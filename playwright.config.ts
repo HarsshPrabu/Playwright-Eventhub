@@ -40,7 +40,8 @@ export default defineConfig({
     // 🌐 UI Cross-Browser Projects (Runs UI / E2E test specs)
     {
       name: 'chromium',
-      testDir: './tests/e2e',
+      testDir: './tests',
+      testIgnore: ['**/api/**', '**/auth/**'],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -58,7 +59,8 @@ export default defineConfig({
     },
     {
       name: 'firefox',
-      testDir: './tests/e2e',
+      testDir: './tests',
+      testIgnore: ['**/api/**', '**/auth/**'],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
@@ -68,7 +70,8 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      testDir: './tests/e2e',
+      testDir: './tests',
+      testIgnore: ['**/api/**', '**/auth/**'],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],

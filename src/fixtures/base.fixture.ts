@@ -1,6 +1,13 @@
 import { test as baseTest, expect } from './incognito.fixture';
-import { LoginPage } from '../pages/LoginPage';
-import { HomePage } from '../pages/HomePage';
+import { LoginPage } from '../ui/pages/auth/LoginPage';
+import { RegisterPage } from '../ui/pages/auth/RegisterPage';
+import { HomePage } from '../ui/pages/customer/HomePage';
+import { EventsPage } from '../ui/pages/customer/EventsPage';
+import { MyBookingsPage } from '../ui/pages/customer/MyBookingsPage';
+import { AdminEventsPage } from '../ui/pages/admin/AdminEventsPage';
+import { AdminBookingsPage } from '../ui/pages/admin/AdminBookingsPage';
+import { BookingDetailsPage } from '../ui/pages/customer/BookingDetailsPage';
+import { EventDetailsPage } from '../ui/pages/customer/EventDetailsPage';
 import { BaseAPI } from '../api/BaseAPI';
 import { EventHubAPI } from '../api/services/EventHubAPI';
 import { envConfig } from '../config/env.config';
@@ -15,7 +22,14 @@ import { ScreenshotHelper } from '../helpers/ScreenshotHelper';
 
 type FrameworkFixtures = {
   loginPage: LoginPage;
+  registerPage: RegisterPage;
   homePage: HomePage;
+  eventsPage: EventsPage;
+  myBookingsPage: MyBookingsPage;
+  adminEventsPage: AdminEventsPage;
+  adminBookingsPage: AdminBookingsPage;
+  bookingDetailsPage: BookingDetailsPage;
+  eventDetailsPage: EventDetailsPage;
   baseApi: BaseAPI;
   pageApi: BaseAPI;
   publicEventHubApi: EventHubAPI;
@@ -37,8 +51,36 @@ export const test = baseTest.extend<FrameworkFixtures, FrameworkWorkerFixtures>(
     await use(new LoginPage(page));
   },
 
+  registerPage: async ({ page }, use) => {
+    await use(new RegisterPage(page));
+  },
+
   homePage: async ({ page }, use) => {
     await use(new HomePage(page));
+  },
+
+  eventsPage: async ({ page }, use) => {
+    await use(new EventsPage(page));
+  },
+
+  myBookingsPage: async ({ page }, use) => {
+    await use(new MyBookingsPage(page));
+  },
+
+  adminEventsPage: async ({ page }, use) => {
+    await use(new AdminEventsPage(page));
+  },
+
+  adminBookingsPage: async ({ page }, use) => {
+    await use(new AdminBookingsPage(page));
+  },
+
+  bookingDetailsPage: async ({ page }, use) => {
+    await use(new BookingDetailsPage(page));
+  },
+
+  eventDetailsPage: async ({ page }, use) => {
+    await use(new EventDetailsPage(page));
   },
 
   // Standalone BaseAPI wrapping Playwright's native request fixture

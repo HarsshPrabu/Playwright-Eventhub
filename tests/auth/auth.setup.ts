@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { test as setup, expect } from '@playwright/test';
-import { envConfig } from '../src/config/env.config';
+import { envConfig } from '../../src/config/env.config';
 
 const authFile = path.resolve('playwright', '.auth', 'user.json');
 

@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+import { AdminNavigation } from '../admin/AdminNavigation';
 
 export type AppSection = 'home' | 'events' | 'bookings';
 
@@ -13,6 +14,7 @@ export class AppHeader {
   readonly mobileMenuButton: Locator;
   readonly userEmailDisplay: Locator;
   readonly logoutButton: Locator;
+  readonly adminNavigation: AdminNavigation;
 
   constructor(page: Page) {
     this.navbar = page.getByRole('navigation');
@@ -24,6 +26,7 @@ export class AppHeader {
     this.mobileMenuButton = page.getByRole('button', { name: 'Toggle menu', exact: true });
     this.userEmailDisplay = page.getByTestId('user-email-display');
     this.logoutButton = page.getByTestId('logout-btn');
+    this.adminNavigation = new AdminNavigation(page);
   }
 
   navLocator(section: AppSection): Locator {
